@@ -12,3 +12,9 @@ categories = ["web-programming", "wasm"]
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[features]
+default = ["serde"]
+wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen", "dep:js-sys"]
+serde = ["dep:serde"]
+js-sys = ["dep:js-sys"]
+
