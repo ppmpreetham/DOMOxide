@@ -18,3 +18,12 @@ wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen", "dep:js-sys"]
 serde = ["dep:serde"]
 js-sys = ["dep:js-sys"]
 
+[dependencies]
+html5ever = "0.39.0"
+js-sys = { version = "0.3.100", optional = true }
+markup5ever_rcdom = "0.39.0"
+serde = { version = "1", features = ["derive"], optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "0.3.100", features = ["Window", "Document"] }
+
