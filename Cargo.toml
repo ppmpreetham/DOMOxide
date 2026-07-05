@@ -1,0 +1,14 @@
+[package]
+name = "domoxide"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "A Rust HTML sanitizer shaped around DOMPurify compatibility."
+repository = "https://github.com/ppmpr/DOMOxide"
+readme = "README.md"
+keywords = ["html", "sanitize", "xss", "dompurify", "wasm"]
+categories = ["web-programming", "wasm"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
