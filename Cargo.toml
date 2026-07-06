@@ -27,3 +27,9 @@ serde-wasm-bindgen = { version = "0.6", optional = true }
 wasm-bindgen = { version = "0.2", optional = true }
 web-sys = { version = "0.3.100", features = ["Window", "Document"] }
 
+[dev-dependencies]
+pretty_assertions = "1"
+wasm-bindgen-test = "0.3"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
