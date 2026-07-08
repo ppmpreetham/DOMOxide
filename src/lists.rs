@@ -229,3 +229,56 @@ pub const TAGS_SVG_DISALLOWED: &[&str] = &[
 ];
 
 /// mathml elements allowed by default
+pub const TAGS_MATHML: &[&str] = &[
+    "math",
+    "menclose",
+    "merror",
+    "mfenced",
+    "mfrac",
+    "mglyph",
+    "mi",
+    "mlabeledtr",
+    "mmultiscripts",
+    "mn",
+    "mo",
+    "mover",
+    "mpadded",
+    "mphantom",
+    "mroot",
+    "mrow",
+    "ms",
+    "mspace",
+    "msqrt",
+    "mstyle",
+    "msub",
+    "msup",
+    "msubsup",
+    "mtable",
+    "mtd",
+    "mtext",
+    "mtr",
+    "munder",
+    "munderover",
+    "mprescripts",
+];
+
+/// mathml elements disallowed by default
+pub const TAGS_MATHML_DISALLOWED: &[&str] = &[
+    "maction",
+    "maligngroup",
+    "malignmark",
+    "mlongdiv",
+    "mscarries",
+    "mscarry",
+    "msgroup",
+    "mstack",
+    "msline",
+    "msrow",
+    "semantics",
+    "annotation",
+    "annotation-xml",
+    "mprescripts",
+    "none",
+];
+
+/// html attributes allowed by default
