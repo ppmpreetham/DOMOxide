@@ -734,3 +734,63 @@ pub const RESERVED_CUSTOM_ELEMENT_NAMES: &[&str] = &[
 ];
 
 /// void elements emitted without an end tag by html serialization.
+pub const VOID_ELEMENTS: &[&str] = &[
+    "area", "base", "basefont", "bgsound", "br", "col", "embed", "frame", "hr", "img", "input",
+    "keygen", "link", "meta", "param", "source", "track", "wbr",
+];
+
+/// elements whose text children serialize unescaped
+pub const RAW_TEXT_SERIALIZE: &[&str] = &[
+    "style",
+    "xmp",
+    "iframe",
+    "noembed",
+    "noframes",
+    "plaintext",
+    "script",
+];
+
+/// document/window/form properties blocked from `id`/`name` clobbering
+pub const CLOBBERABLE_NAMES: &[&str] = &[
+    "attributes",
+    "activeElement",
+    "adoptNode",
+    "body",
+    "children",
+    "cookie",
+    "createElement",
+    "firstElementChild",
+    "forms",
+    "getElementById",
+    "location",
+    "nodeIterator",
+    "nodeName",
+    "nodeType",
+    "parentNode",
+    "removeAttribute",
+    "removeAttributeNode",
+    "removeChild",
+    "setAttribute",
+    "defaultView",
+    "documentElement",
+    "implementation",
+    "head",
+    "images",
+    "links",
+    "scripts",
+    "elements",
+    "length",
+    "method",
+    "action",
+    "submit",
+    "reset",
+    "acceptCharset",
+    "enctype",
+    "formEnctype",
+    "formAction",
+    "formMethod",
+    "target",
+    "isIndex",
+    "hasChildNodes",
+    "namespaceURI",
+];
