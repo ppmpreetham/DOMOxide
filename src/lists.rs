@@ -654,3 +654,83 @@ pub const ATTRS_MATHML: &[&str] = &[
 ];
 
 /// xml-namespaced attributes allowed by default
+pub const ATTRS_XML: &[&str] = &[
+    "xlink:href",
+    "xml:id",
+    "xlink:title",
+    "xml:space",
+    "xmlns:xlink",
+];
+
+/// content of removed elements is dropped for these tags
+pub const FORBID_CONTENTS: &[&str] = &[
+    "annotation-xml",
+    "audio",
+    "colgroup",
+    "desc",
+    "foreignobject",
+    "head",
+    "iframe",
+    "math",
+    "mi",
+    "mn",
+    "mo",
+    "ms",
+    "mtext",
+    "noembed",
+    "noframes",
+    "noscript",
+    "plaintext",
+    "script",
+    "style",
+    "svg",
+    "template",
+    "thead",
+    "title",
+    "video",
+    "xmp",
+];
+
+/// elements that might carry a `data:` uri
+pub const DATA_URI_TAGS: &[&str] = &["audio", "video", "img", "source", "image", "track"];
+
+/// attributes whose values are never treated as uris.
+pub const URI_SAFE_ATTRS: &[&str] = &[
+    "alt",
+    "class",
+    "for",
+    "id",
+    "label",
+    "name",
+    "pattern",
+    "placeholder",
+    "role",
+    "summary",
+    "title",
+    "value",
+    "style",
+    "xmlns",
+];
+
+/// mathml text integration points
+pub const MATHML_TEXT_INTEGRATION_POINTS: &[&str] = &["mi", "mo", "mn", "ms", "mtext"];
+
+/// html integration points
+pub const HTML_INTEGRATION_POINTS: &[&str] = &["annotation-xml"];
+
+/// elements valid in both the svg and the html namespace
+pub const COMMON_SVG_AND_HTML: &[&str] = &["title", "style", "font", "a", "script"];
+
+/// names never treated as basic custom elements
+pub const RESERVED_CUSTOM_ELEMENT_NAMES: &[&str] = &[
+    "annotation-xml",
+    "color-profile",
+    "font-face",
+    "font-face-format",
+    "font-face-name",
+    "font-face-src",
+    "font-face-uri",
+    "missing-glyph",
+];
+
+/// void elements emitted without an end tag by html serialization.
