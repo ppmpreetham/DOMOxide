@@ -33,3 +33,52 @@ pub struct CustomElementHandling {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Config {
+    #[serde(
+        default,
+        rename = "ALLOWED_TAGS",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_tags: Option<Vec<String>>,
+    #[serde(default, rename = "ADD_TAGS", skip_serializing_if = "Vec::is_empty")]
+    pub add_tags: Vec<String>,
+    #[serde(default, rename = "FORBID_TAGS", skip_serializing_if = "Vec::is_empty")]
+    pub forbid_tags: Vec<String>,
+    #[serde(
+        default,
+        rename = "ALLOWED_ATTR",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allowed_attr: Option<Vec<String>>,
+    #[serde(default, rename = "ADD_ATTR", skip_serializing_if = "Vec::is_empty")]
+    pub add_attr: Vec<String>,
+    #[serde(default, rename = "FORBID_ATTR", skip_serializing_if = "Vec::is_empty")]
+    pub forbid_attr: Vec<String>,
+    #[serde(
+        default,
+        rename = "USE_PROFILES",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub use_profiles: Option<UseProfiles>,
+    #[serde(
+        default,
+        rename = "CUSTOM_ELEMENT_HANDLING",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub custom_element_handling: Option<CustomElementHandling>,
+    #[serde(default = "default_true", rename = "ALLOW_DATA_ATTR")]
+    pub allow_data_attr: bool,
+    #[serde(default = "default_true", rename = "ALLOW_ARIA_ATTR")]
+    pub allow_aria_attr: bool,
+    #[serde(default = "default_true", rename = "SANITIZE_DOM")]
+    pub sanitize_dom: bool,
+    #[serde(default = "default_true", rename = "SAFE_FOR_XML")]
+    pub safe_for_xml: bool,
+    #[serde(default = "default_true", rename = "KEEP_CONTENT")]
+    pub keep_content: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
