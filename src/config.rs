@@ -25,3 +25,11 @@ impl UseProfiles {
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
+pub struct CustomElementHandling {
+    #[serde(default, rename = "tagNameCheck")]
+    pub allow_custom_elements: bool,
+    #[serde(default, rename = "allowCustomizedBuiltInElements")]
+    pub allow_customized_builtins: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
