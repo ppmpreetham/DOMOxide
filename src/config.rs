@@ -82,3 +82,71 @@ fn default_true() -> bool {
     true
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            allowed_tags: None,
+            add_tags: Vec::new(),
+            forbid_tags: Vec::new(),
+            allowed_attr: None,
+            add_attr: Vec::new(),
+            forbid_attr: Vec::new(),
+            use_profiles: None,
+            custom_element_handling: None,
+            allow_data_attr: true,
+            allow_aria_attr: true,
+            sanitize_dom: true,
+            safe_for_xml: true,
+            keep_content: true,
+        }
+    }
+}
+
+impl Config {
+    pub fn html_profile() -> Self {
+        Self {
+            use_profiles: Some(UseProfiles::html()),
+            ..Self::default()
+        }
+    }
+
+    pub fn add_tags<I, S>(mut self, tags: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.add_tags.extend(tags.into_iter().map(Into::into));
+        self
+    }
+
+    pub fn add_attr<I, S>(mut self, attrs: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.add_attr.extend(attrs.into_iter().map(Into::into));
+        self
+    }
+
+    pub fn forbid_tags<I, S>(mut self, tags: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.forbid_tags.extend(tags.into_iter().map(Into::into));
+        self
+    }
+
+    pub fn forbid_attr<I, S>(mut self, attrs: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.forbid_attr.extend(attrs.into_iter().map(Into::into));
+        self
+    }
+
+    pub fn clean(&self, dirty: &str) -> String {
+        crate::sanitize::clean(dirty, &crate::policy::Policy::new(self), &Hooks::default())
+    }
+}
