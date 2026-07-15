@@ -92,3 +92,16 @@ fn profile_attrs(
     set
 }
 
+pub struct Policy {
+    tags: SetRef<'static>,
+    attrs: SetRef<'static>,
+    forbid_tags: Vec<String>,
+    forbid_attr: Vec<String>,
+    pub(crate) custom: Option<crate::config::CustomElementHandling>,
+    pub(crate) allow_data_attr: bool,
+    pub(crate) allow_aria_attr: bool,
+    pub(crate) sanitize_dom: bool,
+    pub(crate) safe_for_xml: bool,
+    pub(crate) keep_content: bool,
+}
+
