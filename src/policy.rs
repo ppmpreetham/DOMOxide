@@ -44,3 +44,51 @@ fn default_attrs() -> &'static HashSet<String> {
     })
 }
 
+fn profile_tags(
+    crate::config::UseProfiles {
+        html,
+        svg,
+        svg_filters,
+        math_ml,
+    }: crate::config::UseProfiles,
+) -> HashSet<String> {
+    let mut set = HashSet::new();
+    if html {
+        set.extend(l::TAGS_HTML.iter().map(|s| (*s).to_owned()));
+    }
+    if svg {
+        set.extend(l::TAGS_SVG.iter().map(|s| (*s).to_owned()));
+    }
+    if svg_filters {
+        set.extend(l::TAGS_SVG_FILTERS.iter().map(|s| (*s).to_owned()));
+    }
+    if math_ml {
+        set.extend(l::TAGS_MATHML.iter().map(|s| (*s).to_owned()));
+    }
+    set
+}
+
+fn profile_attrs(
+    crate::config::UseProfiles {
+        html,
+        svg,
+        svg_filters,
+        math_ml,
+    }: crate::config::UseProfiles,
+) -> HashSet<String> {
+    let mut set = HashSet::new();
+    if html {
+        set.extend(l::ATTRS_HTML.iter().map(|s| (*s).to_owned()));
+    }
+    if svg || svg_filters {
+        set.extend(l::ATTRS_SVG.iter().map(|s| (*s).to_owned()));
+    }
+    if math_ml {
+        set.extend(l::ATTRS_MATHML.iter().map(|s| (*s).to_owned()));
+    }
+    if svg || svg_filters || math_ml {
+        set.extend(l::ATTRS_XML.iter().map(|s| (*s).to_owned()));
+    }
+    set
+}
+
