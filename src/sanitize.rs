@@ -41,3 +41,46 @@ impl Ns {
 }
 
 /// dirty -> clean html
+pub(crate) fn clean(dirty: &str, policy: &Policy, hooks: &Hooks) -> String {
+    if !dirty.contains('<') {
+        return dirty.to_owned();
+    }
+
+    let scan = preprocess::prescan(dirty);
+    let dirty = scan.html.as_deref().unwrap_or(dirty);
+
+    let parse_opts = html5ever::ParseOpts {
+        tree_builder: html5ever::tree_builder::TreeBuilderOpts {
+            drop_doctype: true,
+            scripting_enabled: false,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let dom = html5ever::parse_document(dom::RcDom::default(), parse_opts).one(dirty);
+
+    let mut out = String::with_capacity(dirty.len());
+    if let Some(body) = find_body(&dom.document) {
+        escape_text(leading_whitespace(dirty), &mut out);
+        let children = children_of(&body);
+        let mut walker = Walker {
+            policy,
+            hooks,
+            scratch: String::new(),
+            xmlns_spots: &scan.xmlns_spots,
+            foreign_seen: 0,
+        };
+        walker.children(&children, Ns::Html, "body", &mut out);
+    }
+    out
+}
+
+/// `^[\r\n\t ]+` prefix that parsers drop but we re-insert.
+fn leading_whitespace(dirty: &str) -> &str {
+    let end = dirty
+        .find(|c: char| !matches!(c, '\r' | '\n' | '\t' | ' '))
+        .unwrap_or(dirty.len());
+    &dirty[..end]
+}
+
+/// locates `html > body`
