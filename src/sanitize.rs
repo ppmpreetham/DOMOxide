@@ -84,3 +84,39 @@ fn leading_whitespace(dirty: &str) -> &str {
 }
 
 /// locates `html > body`
+fn find_body(document: &Handle) -> Option<Handle> {
+    let top = document.children.borrow();
+    let html = top.iter().find(|child| elem_name(child) == Some("html"))?;
+    let nested = html.children.borrow();
+    if nested
+        .iter()
+        .any(|child| elem_name(child) == Some("frameset"))
+    {
+        return None;
+    }
+    nested
+        .iter()
+        .find(|child| elem_name(child) == Some("body"))
+        .cloned()
+}
+
+/// template contents live in a separate fragment; everything else in place.
+fn children_of(node: &Handle) -> Vec<Handle> {
+    if let NodeData::Element {
+        template_contents, ..
+    } = &node.data
+        && let Some(fragment) = template_contents.borrow().as_ref()
+    {
+        return fragment.children.borrow().clone();
+    }
+
+    node.children.borrow().clone()
+}
+
+fn elem_name(node: &Handle) -> Option<&str> {
+    match &node.data {
+        NodeData::Element { name, .. } => Some(name.local.as_ref()),
+        _ => None,
+    }
+}
+
