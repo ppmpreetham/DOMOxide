@@ -120,3 +120,38 @@ fn elem_name(node: &Handle) -> Option<&str> {
     }
 }
 
+struct Walker<'a> {
+    policy: &'a Policy,
+    hooks: &'a Hooks,
+    scratch: String,
+    /// (nth svg/math tag, xmlns attr position) recorded by the prescan
+    xmlns_spots: &'a [(u32, u16)],
+    foreign_seen: u32,
+}
+
+impl Walker<'_> {
+    fn children(&mut self, nodes: &[Handle], parent_ns: Ns, parent_tag: &str, out: &mut String) {
+        for node in nodes {
+            self.node(node, parent_ns, parent_tag, out);
+        }
+    }
+
+    fn node(&mut self, node: &Handle, parent_ns: Ns, parent_tag: &str, out: &mut String) {
+        match &node.data {
+            NodeData::Text { contents } => {
+                let text = contents.borrow();
+                if is_raw_text(parent_tag) {
+                    out.push_str(&text);
+                } else {
+                    escape_text(&text, out);
+                }
+            }
+            // comments and processing instructions are not allow-listed: dropped.
+            NodeData::Comment { .. }
+            | NodeData::Doctype { .. }
+            | NodeData::ProcessingInstruction { .. }
+            | NodeData::Document => {}
+            NodeData::Element { .. } => self.element(node, parent_ns, parent_tag, out),
+        }
+    }
+
