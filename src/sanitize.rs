@@ -155,3 +155,140 @@ impl Walker<'_> {
         }
     }
 
+    fn element(&mut self, node: &Handle, parent_ns: Ns, parent_tag: &str, out: &mut String) {
+        let NodeData::Element { name, attrs, .. } = &node.data else {
+            unreachable!("element() called on a non-element");
+        };
+        let tag = name.local.to_string();
+        let tag_lower = tag.to_lowercase();
+        let ns = Ns::from_url(name.ns.as_ref());
+        let mut attr_list = parse_attrs(attrs);
+        self.restore_xmlns(&mut attr_list, ns, &tag_lower);
+        let children = children_of(node);
+
+        if self.removed_by_element_hooks(&tag_lower, &attr_list) {
+            return;
+        }
+
+        // SAFE_FOR_XML mXss probe on text-only subtrees; rawtext parents
+        // serialize their text unescaped, which is what the probe must see.
+        if self.policy.safe_for_xml
+            && !children.is_empty()
+            && !children
+                .iter()
+                .any(|child| matches!(child.data, NodeData::Element { .. }))
+            && has_mxss_marker(&raw_inner_html(&children, is_raw_text(&tag_lower)))
+            && has_mxss_marker(&raw_text_of(&children))
+        {
+            return;
+        }
+        // style elements must not contain element children (html namespace).
+        if ns == Ns::Html
+            && tag_lower == "style"
+            && children
+                .iter()
+                .any(|child| matches!(child.data, NodeData::Element { .. }))
+        {
+            return;
+        }
+
+        let forbidden = self.policy.forbids_tag(&tag_lower);
+        let custom_ok = !forbidden && self.is_custom_tag(&tag_lower);
+        if forbidden || !(self.policy.allows_tag(&tag_lower) || custom_ok) {
+            if self.policy.keep_content && !self.policy.drops_content_of(&tag_lower) {
+                self.children(&children, parent_ns, parent_tag, out);
+            }
+            return;
+        }
+
+        if !namespace_valid(ns, &tag_lower, parent_ns, parent_tag)
+            || matches!(tag_lower.as_str(), "noscript" | "noembed" | "noframes")
+                && has_noscript_breakout(&raw_inner_html(&children, false))
+        {
+            return;
+        }
+
+        let sanitized = attributes::sanitize(
+            self.policy,
+            self.hooks,
+            &tag_lower,
+            attr_list,
+            &mut self.scratch,
+        );
+
+        out.push('<');
+        out.push_str(&tag);
+        for attr in &sanitized {
+            out.push(' ');
+            out.push_str(&attr.name);
+            out.push_str("=\"");
+            escape_attribute(&attr.value, out);
+            out.push('"');
+        }
+        out.push('>');
+
+        if self
+            .hooks
+            .after_sanitize_elements
+            .as_ref()
+            .is_some_and(|hook| hook(&tag_lower, &mut HashMap::new()) == HookAction::ForceRemove)
+        {
+            return;
+        }
+
+        // void elements serialize without an end tag or children.
+        if l::VOID_ELEMENTS.contains(&tag_lower.as_str()) {
+            return;
+        }
+        self.children(&children, ns, &tag_lower, out);
+        out.push_str("</");
+        out.push_str(&tag);
+        out.push('>');
+    }
+
+    /// re-inserts the `xmlns` declaration html5ever consumed when the source
+    /// carried one, at its original attribute position.
+    fn restore_xmlns(&mut self, attr_list: &mut Vec<ParsedAttr>, ns: Ns, tag_lower: &str) {
+        if !matches!((ns, tag_lower), (Ns::Svg, "svg") | (Ns::MathMl, "math")) {
+            return;
+        }
+        let ordinal = self.foreign_seen;
+        self.foreign_seen += 1;
+        let Some((_, pos)) = self.xmlns_spots.iter().find(|(ord, _)| *ord == ordinal) else {
+            return;
+        };
+        let spot = ParsedAttr {
+            orig: *pos as usize,
+            name: "xmlns".to_owned(),
+            value: ns.xmlns_url().to_owned(),
+        };
+        let insert_at = attr_list.partition_point(|attr| attr.orig <= *pos as usize);
+        attr_list.insert(insert_at.min(attr_list.len()), spot);
+    }
+
+    /// before/uponSanitizeElement hooks may force-remove the element.
+    fn removed_by_element_hooks(&self, tag_lower: &str, attrs: &[ParsedAttr]) -> bool {
+        let run = |hook: Option<&Box<crate::hooks::ElementHook>>| {
+            hook.is_some_and(|hook| {
+                hook(
+                    tag_lower,
+                    &mut attrs
+                        .iter()
+                        .map(|a| (a.name.clone(), a.value.clone()))
+                        .collect(),
+                ) == HookAction::ForceRemove
+            })
+        };
+        run(self.hooks.before_sanitize_elements.as_ref())
+            || run(self.hooks.upon_sanitize_element.as_ref())
+    }
+
+    /// CUSTOM_ELEMENT_HANDLING gate for well-formed custom names.
+    fn is_custom_tag(&self, tag_lower: &str) -> bool {
+        self.policy
+            .custom
+            .is_some_and(|custom| custom.allow_custom_elements)
+            && is_basic_custom_element(tag_lower)
+    }
+}
+
