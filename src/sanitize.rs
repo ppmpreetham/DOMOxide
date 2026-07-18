@@ -292,3 +292,26 @@ impl Walker<'_> {
     }
 }
 
+type AttrVec = RefCell<Vec<html5ever::Attribute>>;
+
+/// an attribute as parsed, remembering its source position.
+pub(crate) struct ParsedAttr {
+    pub(crate) orig: usize,
+    pub(crate) name: String,
+    pub(crate) value: String,
+}
+
+fn parse_attrs(attrs: &AttrVec) -> Vec<ParsedAttr> {
+    attrs
+        .borrow()
+        .iter()
+        .enumerate()
+        .map(|(orig, attr)| ParsedAttr {
+            orig,
+            name: attr_name(attr),
+            value: attr.value.to_string(),
+        })
+        .collect()
+}
+
+/// renders prefixed attribute names exactly like dom serialization does.
