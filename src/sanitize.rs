@@ -315,3 +315,15 @@ fn parse_attrs(attrs: &AttrVec) -> Vec<ParsedAttr> {
 }
 
 /// renders prefixed attribute names exactly like dom serialization does.
+fn attr_name(attr: &html5ever::Attribute) -> String {
+    use html5ever::ns;
+    let local = attr.name.local.as_ref();
+    match attr.name.prefix.as_deref() {
+        Some(prefix) => format!("{prefix}:{local}"),
+        None if attr.name.ns == ns!(xlink) => format!("xlink:{local}"),
+        None if attr.name.ns == ns!(xml) => format!("xml:{local}"),
+        None if attr.name.ns == ns!(xmlns) && local != "xmlns" => format!("xmlns:{local}"),
+        None => local.to_owned(),
+    }
+}
+
