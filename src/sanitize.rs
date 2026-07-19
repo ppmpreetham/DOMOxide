@@ -327,3 +327,67 @@ fn attr_name(attr: &html5ever::Attribute) -> String {
     }
 }
 
+fn namespace_valid(ns: Ns, tag_lower: &str, parent_ns: Ns, parent_tag: &str) -> bool {
+    match ns {
+        Ns::Svg => {
+            if parent_ns == Ns::Html {
+                return tag_lower == "svg";
+            }
+            if parent_ns == Ns::MathMl {
+                return tag_lower == "svg"
+                    && (parent_tag == "annotation-xml"
+                        || l::MATHML_TEXT_INTEGRATION_POINTS.contains(&parent_tag));
+            }
+            Policy::is_known_svg_tag(tag_lower)
+        }
+        Ns::MathMl => {
+            if parent_ns == Ns::Html {
+                return tag_lower == "math";
+            }
+            if parent_ns == Ns::Svg {
+                return tag_lower == "math" && l::HTML_INTEGRATION_POINTS.contains(&parent_tag);
+            }
+            Policy::is_known_mathml_tag(tag_lower)
+        }
+        Ns::Html => {
+            if parent_ns == Ns::Svg && parent_tag != "annotation-xml" {
+                return false;
+            }
+            if parent_ns == Ns::MathMl && !l::MATHML_TEXT_INTEGRATION_POINTS.contains(&parent_tag) {
+                return false;
+            }
+            !Policy::is_known_mathml_tag(tag_lower)
+                && (l::COMMON_SVG_AND_HTML.contains(&tag_lower)
+                    || !Policy::is_known_svg_tag(tag_lower))
+        }
+    }
+}
+
+fn raw_text_of(nodes: &[Handle]) -> String {
+    let mut text = String::new();
+    for node in nodes {
+        if let NodeData::Text { contents } = &node.data {
+            text.push_str(&contents.borrow());
+        }
+    }
+    text
+}
+
+/// serialized-children probe feeding the SAFE_FOR_XML mXss checks; rawtext
+/// parents emit text verbatim exactly like `innerHTML` does.
+fn raw_inner_html(nodes: &[Handle], raw: bool) -> String {
+    let mut out = String::new();
+    for node in nodes {
+        match &node.data {
+            NodeData::Text { contents } if raw => out.push_str(&contents.borrow()),
+            NodeData::Text { contents } => escape_text(&contents.borrow(), &mut out),
+            NodeData::Comment { contents } => {
+                out.push_str("<!--");
+                out.push_str(contents);
+                out.push_str("-->");
+            }
+            _ => {}
+        }
+    }
+    out
+}
