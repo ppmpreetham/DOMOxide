@@ -51,3 +51,10 @@ pub(crate) fn sanitize(
     kept
 }
 
+fn run_attr_hooks(hooks: &Hooks, tag: &str, attr: &str, value: &mut String) -> bool {
+    let mut removed = |hook: Option<&Box<AttributeHook>>| {
+        hook.is_some_and(|hook| hook(tag, attr, value) == HookAction::ForceRemove)
+    };
+    removed(hooks.before_sanitize_attributes.as_ref())
+        || removed(hooks.upon_sanitize_attribute.as_ref())
+}
