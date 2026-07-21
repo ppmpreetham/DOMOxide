@@ -58,3 +58,22 @@ fn run_attr_hooks(hooks: &Hooks, tag: &str, attr: &str, value: &mut String) -> b
     removed(hooks.before_sanitize_attributes.as_ref())
         || removed(hooks.upon_sanitize_attribute.as_ref())
 }
+fn has_comment_breakout(value: &str) -> bool {
+    const TAGS: &[&str] = &[
+        "style", "script", "title", "xmp", "textarea", "noscript", "iframe", "noembed", "noframes",
+    ];
+    let bytes = value.as_bytes();
+    (0..bytes.len()).any(|i| match bytes[i] {
+        b'-' | b']' => {
+            value[i..].starts_with("-->")
+                || value[i..].starts_with("--!>")
+                || value[i..].starts_with("]>")
+        }
+        b'<' if bytes.get(i + 1) == Some(&b'/') => TAGS.iter().any(|tag| {
+            value[i + 2..].len() >= tag.len()
+                && value[i + 2..i + 2 + tag.len()].eq_ignore_ascii_case(tag)
+        }),
+        _ => false,
+    })
+}
+
