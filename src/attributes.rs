@@ -77,3 +77,31 @@ fn has_comment_breakout(value: &str) -> bool {
     })
 }
 
+fn is_valid_attribute(
+    policy: &Policy,
+    tag_lower: &str,
+    name_lower: &str,
+    value: &str,
+    scratch: &mut String,
+) -> bool {
+    if policy.forbids_attr(name_lower) {
+        return false;
+    }
+    if policy.sanitize_dom && (name_lower == "id" || name_lower == "name") && clobbers(value) {
+        return false;
+    }
+    if policy.allow_data_attr && is_data_attr(name_lower)
+        || policy.allow_aria_attr && is_aria_attr(name_lower)
+    {
+        return true;
+    }
+    if !policy.allows_attr(name_lower) {
+        return allowed_via_custom_elements(policy, tag_lower, name_lower, value);
+    }
+    uri::is_uri_safe_attribute(name_lower)
+        || uri::is_allowed_uri(value, scratch)
+        || uri::is_allowed_data_uri(tag_lower, name_lower, value)
+        || value.is_empty()
+}
+
+/// `/^data-[\-\w.\u{b7}-\u{10ffff}]+$/`
