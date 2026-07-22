@@ -105,3 +105,24 @@ fn is_valid_attribute(
 }
 
 /// `/^data-[\-\w.\u{b7}-\u{10ffff}]+$/`
+fn is_data_attr(name_lower: &str) -> bool {
+    let Some(rest) = name_lower.strip_prefix("data-") else {
+        return false;
+    };
+    !rest.is_empty()
+        && rest.chars().all(|c| {
+            matches!(c, '-' | '.' | '_') || c.is_ascii_alphanumeric() || ('\u{b7}'..).contains(&c)
+        })
+}
+
+/// `/^aria-[\-\w]+$/`
+fn is_aria_attr(name_lower: &str) -> bool {
+    let Some(rest) = name_lower.strip_prefix("aria-") else {
+        return false;
+    };
+    !rest.is_empty()
+        && rest
+            .chars()
+            .all(|c| matches!(c, '-' | '_') || c.is_ascii_alphanumeric())
+}
+
