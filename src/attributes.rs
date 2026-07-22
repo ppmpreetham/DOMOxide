@@ -126,3 +126,41 @@ fn is_aria_attr(name_lower: &str) -> bool {
             .all(|c| matches!(c, '-' | '_') || c.is_ascii_alphanumeric())
 }
 
+fn allowed_via_custom_elements(
+    policy: &Policy,
+    tag_lower: &str,
+    name_lower: &str,
+    value: &str,
+) -> bool {
+    let Some(custom) = policy.custom else {
+        return false;
+    };
+    is_basic_custom_element(tag_lower) && custom.allow_custom_elements
+        || name_lower == "is"
+            && custom.allow_customized_builtins
+            && is_basic_custom_element(&value.to_lowercase())
+}
+
+/// `/^[a-z][.\w]*(-[.\w]+)+$/i` - {reserved names}
+pub(crate) fn is_basic_custom_element(tag_lower: &str) -> bool {
+    !l::RESERVED_CUSTOM_ELEMENT_NAMES.contains(&tag_lower)
+        && matches!(tag_lower.chars().next(), Some(c) if c.is_ascii_alphabetic())
+        && {
+            let mut dashes_pending = 0usize;
+            for c in tag_lower.chars().skip(1) {
+                match c {
+                    '-' => {
+                        if dashes_pending > 0 {
+                            return false;
+                        }
+                        dashes_pending += 1;
+                    }
+                    '.' | '_' => {}
+                    c if c.is_ascii_alphanumeric() => dashes_pending = 0,
+                    _ => return false,
+                }
+            }
+            dashes_pending == 0 && tag_lower.contains('-')
+        }
+}
+
