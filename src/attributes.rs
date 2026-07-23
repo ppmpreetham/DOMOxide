@@ -164,3 +164,22 @@ pub(crate) fn is_basic_custom_element(tag_lower: &str) -> bool {
         }
 }
 
+fn clobbers(value: &str) -> bool {
+    #[cfg(feature = "wasm")]
+    if wasm_clobbers(value) {
+        return true;
+    }
+    l::CLOBBERABLE_NAMES.contains(&value)
+}
+
+#[cfg(feature = "wasm")]
+fn wasm_clobbers(value: &str) -> bool {
+    let Some(window) = web_sys::window() else {
+        return false;
+    };
+    let key = wasm_bindgen::JsValue::from_str(value);
+    js_sys::Reflect::has(&window, &key).unwrap_or(false)
+        || window
+            .document()
+            .is_some_and(|doc| js_sys::Reflect::has(&doc, &key).unwrap_or(false))
+}
