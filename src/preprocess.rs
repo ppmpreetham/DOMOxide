@@ -91,3 +91,54 @@ fn has_ci(haystack: &str, needle: &[u8]) -> bool {
         .any(|w| w.eq_ignore_ascii_case(needle))
 }
 
+enum Action<'a> {
+    /// expand an isindex tag; payload is the attribute source slice.
+    IsIndex(&'a str),
+    /// svg/math start tag: name-end and total lengths for xmlns bookkeeping.
+    Foreign(usize, usize),
+    /// copy a rawtext start tag of this total length plus verbatim content.
+    RawText(usize),
+    /// copy an already-parsed construct of this total length.
+    Copy(usize),
+    /// lone `<` that opens nothing.
+    Literal,
+}
+
+fn action_for(after: &str) -> Action<'_> {
+    let Some(second) = after.as_bytes().get(1).copied() else {
+        return Action::Literal;
+    };
+    match second {
+        b'!' if after.starts_with("<!--") => Action::Copy(comment_len(after)),
+        b'!' | b'?' => Action::Copy(bogus_len(after)),
+        b'/' => Action::Copy(tag_len(&after[1..]) + 1),
+        c if c.is_ascii_alphabetic() => start_tag_action(after),
+        _ => Action::Literal,
+    }
+}
+
+fn start_tag_action(after: &str) -> Action<'_> {
+    let Some(name_len) = tag_name_len(&after[1..]) else {
+        return Action::Literal;
+    };
+    let total = tag_len(after);
+    let name = &after[1..1 + name_len];
+    if name.eq_ignore_ascii_case("isindex") {
+        return Action::IsIndex(&after[1 + name_len..total - 1]);
+    }
+    let foreign = name.eq_ignore_ascii_case("svg") || name.eq_ignore_ascii_case("math");
+    let raw = RAW_TEXT
+        .iter()
+        .find(|candidate| name.eq_ignore_ascii_case(candidate));
+    match (foreign, raw) {
+        (true, _) => Action::Foreign(1 + name_len, total),
+        (_, Some(_)) if !self_closing(after, total) => Action::RawText(total),
+        _ => Action::Copy(total),
+    }
+}
+
+fn self_closing(tag: &str, total: usize) -> bool {
+    tag[total.saturating_sub(2)..total].eq_ignore_ascii_case("/>")
+}
+
+/// records `(ordinal, attribute index)` when the tag carries a plain `xmlns`.
