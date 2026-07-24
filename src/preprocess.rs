@@ -142,3 +142,16 @@ fn self_closing(tag: &str, total: usize) -> bool {
 }
 
 /// records `(ordinal, attribute index)` when the tag carries a plain `xmlns`.
+fn record_xmlns_spot(scan: &mut PreScan, tag: &str, name_end: usize, total: usize) {
+    let ordinal = scan.foreign_seen;
+    scan.foreign_seen += 1;
+    let body = &tag[name_end..total.saturating_sub(1)];
+    for (index, (name, _)) in IterAttrs::new(body).enumerate() {
+        if name.eq_ignore_ascii_case("xmlns") {
+            scan.xmlns_spots.push((ordinal, index as u16));
+            break;
+        }
+    }
+}
+
+/// appends the expanded isindex form for the collected attribute source.
