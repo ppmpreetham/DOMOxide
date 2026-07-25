@@ -155,3 +155,36 @@ fn record_xmlns_spot(scan: &mut PreScan, tag: &str, name_end: usize, total: usiz
 }
 
 /// appends the expanded isindex form for the collected attribute source.
+fn expand_isindex(out: &mut String, attrs: &str) {
+    let attrs = attrs.trim_end_matches(['/', ' ', '\t', '\n', '\r', '\u{c}']);
+    out.push_str("<form><hr><label>");
+    out.push_str(PROMPT);
+    out.push_str("<input");
+    out.push_str(attrs);
+    out.push_str(" name=\"isindex\"></label><hr></form>");
+}
+
+/// copies a rawtext element's start tag, content and matching end tag verbatim.
+fn copy_raw_text(out: &mut String, start_tag: &str, start_tag_len: usize) {
+    out.push_str(&start_tag[..start_tag_len]);
+    let body = &start_tag[start_tag_len..];
+    let name_len = tag_name_len(&start_tag[1..]).unwrap_or(0);
+    let name = &start_tag[1..1 + name_len];
+    let mut from = 0;
+    while let Some(offset) = body[from..].find("</") {
+        let at = from + offset;
+        let Some(candidate_len) = tag_name_len(&body[at + 2..]) else {
+            from = at + 2;
+            continue;
+        };
+        if name.eq_ignore_ascii_case(&body[at + 2..at + 2 + candidate_len]) {
+            let end = at + 2 + tag_len(&body[at + 2..]);
+            out.push_str(&body[..end]);
+            return;
+        }
+        from = at + 2;
+    }
+    out.push_str(body);
+}
+
+/// length of a tag name starting at `name`; first byte must be a letter.
