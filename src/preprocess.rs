@@ -188,3 +188,94 @@ fn copy_raw_text(out: &mut String, start_tag: &str, start_tag_len: usize) {
 }
 
 /// length of a tag name starting at `name`; first byte must be a letter.
+fn tag_name_len(name: &str) -> Option<usize> {
+    let bytes = name.as_bytes();
+    if !bytes.first().copied()?.is_ascii_alphabetic() {
+        return None;
+    }
+    Some(
+        bytes[1..]
+            .iter()
+            .position(|b| b.is_ascii_whitespace() || matches!(b, b'/' | b'>'))
+            .map_or(bytes.len(), |i| i + 1),
+    )
+}
+
+/// distance from `body` start to just past the terminating `>` (quote aware).
+fn attr_scan_end(body: &str) -> usize {
+    let mut quote = 0u8;
+    for (i, b) in body.as_bytes().iter().enumerate() {
+        match quote {
+            0 if *b == b'>' => return i + 1,
+            0 if *b == b'"' || *b == b'\'' => quote = *b,
+            q if q == *b => quote = 0,
+            _ => {}
+        }
+    }
+    body.len()
+}
+
+fn tag_len(after: &str) -> usize {
+    attr_scan_end(after)
+}
+
+fn bogus_len(after: &str) -> usize {
+    after.find('>').map_or(after.len(), |i| i + 1)
+}
+
+fn comment_len(after: &str) -> usize {
+    after[4..].find("-->").map_or(after.len(), |i| i + 7)
+}
+
+/// minimal attribute iterator over a start-tag body (no value decoding).
+struct IterAttrs<'a> {
+    rest: &'a str,
+}
+
+impl<'a> IterAttrs<'a> {
+    fn new(body: &'a str) -> Self {
+        Self { rest: body }
+    }
+}
+
+impl<'a> Iterator for IterAttrs<'a> {
+    type Item = (&'a str, &'a str);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let rest = self
+            .rest
+            .trim_start_matches([' ', '\t', '\n', '\r', '\u{c}', '/']);
+        if rest.is_empty() || rest.starts_with('>') {
+            return None;
+        }
+        let name_end = rest
+            .find(|c: char| c.is_ascii_whitespace() || matches!(c, '=' | '>' | '/'))
+            .unwrap_or(rest.len());
+        let (name, tail) = rest.split_at(name_end);
+        let tail = tail.trim_start_matches([' ', '\t', '\n', '\r', '\u{c}']);
+        let value = match tail.strip_prefix('=') {
+            Some(after_eq) => {
+                let after_eq = after_eq.trim_start_matches([' ', '\t', '\n', '\r', '\u{c}']);
+                match after_eq.chars().next() {
+                    Some(q @ ('"' | '\'')) => {
+                        let len = after_eq[1..].find(q).map_or(after_eq.len() - 1, |i| i + 2);
+                        self.rest = &after_eq[len..];
+                        &after_eq[1..len - 1]
+                    }
+                    _ => {
+                        let len = after_eq
+                            .find(|c: char| c.is_ascii_whitespace() || c == '>')
+                            .unwrap_or(after_eq.len());
+                        self.rest = &after_eq[len..];
+                        &after_eq[..len]
+                    }
+                }
+            }
+            None => {
+                self.rest = tail;
+                ""
+            }
+        };
+        Some((name, value))
+    }
+}
