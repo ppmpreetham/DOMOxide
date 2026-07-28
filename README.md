@@ -42,3 +42,41 @@ vary between runs; reproduce with `npm run bench`. The gap comes from doing
 the whole sanitize pass in one native/wasm call instead of per-node DOM calls
 through jsdom.
 
+## JavaScript / Wasm Usage
+
+Build the pkg once — it is plain ESM (`--target web`), no `require()`, no
+CommonJS shim, TypeScript types included:
+
+```powershell
+wasm-pack build --target web --features wasm
+```
+
+That produces a publishable `pkg/` folder:
+
+```
+pkg/
+├── domoxide.js        esm entry (tree-shakeable)
+├── domoxide.d.ts      types for sanitize_wasm + init
+├── domoxide_bg.wasm   the engine
+└── package.json       name "domoxide", type "module"
+```
+
+### Option 1 — drop-in dompurify style (`compat.mjs`)
+
+`compat.mjs` ships the familiar `createDOMPurify()` factory — same call shape
+as dompurify, minus the `window` argument. After setup, every call is
+synchronous and signature-identical to `DOMPurify.sanitize(dirty, config?)`:
+
+```js
+import { createDOMPurify } from "./compat.mjs"; // 'domoxide/compat' once published
+
+// no window needed; pass { module_or_path } only when node needs a hand
+const DOMPurify = await createDOMPurify();
+
+DOMPurify.sanitize("<img src=x onerror=alert(1)>"); // '<img src="x">'
+DOMPurify.sanitize(dirty, { FORBID_TAGS: ["style"], USE_PROFILES: { html: true } });
+```
+
+The factory caches initialization, so calling it repeatedly (or mixing with
+`ensureReady()`) never re-instantiates the engine.
+
