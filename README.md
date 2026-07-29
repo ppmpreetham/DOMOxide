@@ -125,3 +125,20 @@ await init(); // the bundler resolves the .wasm import automatically
 export const clean = (dirty) => sanitize_wasm(dirty);
 ```
 
+### Node (esm)
+
+```js
+// node >= 18, "type": "module"
+import { readFile } from "node:fs/promises";
+import init, { sanitize_wasm } from "./pkg/domoxide.js";
+
+await init({
+  module_or_path: await readFile(new URL("./pkg/domoxide_bg.wasm", import.meta.url)),
+});
+
+sanitize_wasm("<img src=x onerror=alert(1)>"); // '<img src="x">'
+```
+
+This is exactly how the parity runner drives the wasm build against jsdom
+(`tests/parity/fixture-parity.mjs`).
+
