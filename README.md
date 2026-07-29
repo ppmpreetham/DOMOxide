@@ -80,3 +80,48 @@ DOMPurify.sanitize(dirty, { FORBID_TAGS: ["style"], USE_PROFILES: { html: true }
 The factory caches initialization, so calling it repeatedly (or mixing with
 `ensureReady()`) never re-instantiates the engine.
 
+### Option 2 — raw esm bindings
+
+```js
+import init, { sanitize_wasm } from "./pkg/domoxide.js";
+
+// initialize once (fetches domoxide_bg.wasm next to the module)
+await init();
+
+// sanitize is synchronous after init; config uses dompurify option names
+const clean = sanitize_wasm(dirty, {
+  ALLOWED_TAGS: ["b", "i", "em", "strong", "a"],
+  FORBID_ATTR: ["style"],
+  USE_PROFILES: { html: true },
+});
+```
+
+- `init()` returns a promise; call it before first use. Pass nothing to load
+  the `.wasm` relative to the js file, or point it somewhere explicit:
+  `await init({ module_or_path: '/static/domoxide_bg.wasm' })` — any
+  `URL`, `Response`, `BufferSource` or precompiled `WebAssembly.Module` works.
+- `sanitize_wasm(dirty, config?)` accepts every DOMPurify-style option:
+  `ALLOWED_TAGS`, `ADD_TAGS`, `FORBID_TAGS`, `ALLOWED_ATTR`, `ADD_ATTR`,
+  `FORBID_ATTR`, `USE_PROFILES { html, svg, svgFilters, mathMl }`,
+  `CUSTOM_ELEMENT_HANDLING`. Omitting the config sanitizes with defaults.
+- Invalid config values throw: `sanitize_wasm` returns a plain string on
+  success and raises a js error otherwise (see `domoxide.d.ts`).
+
+### Browser (no bundler)
+
+```html
+<script type="module">
+  import { createDOMPurify } from "./compat.mjs";
+  const DOMPurify = await createDOMPurify();
+  document.body.innerHTML = DOMPurify.sanitize(userInput);
+</script>
+```
+
+### Bundler (vite / webpack / rollup)
+
+```js
+import init, { sanitize_wasm } from "domoxide"; // point package.json at ./pkg
+await init(); // the bundler resolves the .wasm import automatically
+export const clean = (dirty) => sanitize_wasm(dirty);
+```
+
