@@ -142,3 +142,24 @@ sanitize_wasm("<img src=x onerror=alert(1)>"); // '<img src="x">'
 This is exactly how the parity runner drives the wasm build against jsdom
 (`tests/parity/fixture-parity.mjs`).
 
+## Layout
+
+| module          | role                                                    |
+| --------------- | ------------------------------------------------------- |
+| `config.rs`     | dompurify-shaped configuration surface                  |
+| `policy.rs`     | per-call resolved allow/deny sets (built once)          |
+| `lists.rs`      | static tables synced with upstream `tags.ts`/`attrs.ts` |
+| `sanitize.rs`   | parse pipeline + tree walker                            |
+| `attributes.rs` | `_isValidAttribute` port                                |
+| `uri.rs`        | hand-ported URI policy (no regex engine)                |
+| `escape.rs`     | browser-faithful serialization escaping                 |
+| `preprocess.rs` | `<isindex>` expansion + `xmlns` bookkeeping             |
+| `dom.rs`        | markup5ever rc-dom re-export                            |
+| `hooks.rs`      | hook engine types                                       |
+| `wasm.rs`       | wasm-bindgen exports                                    |
+
+## Parity
+
+Status and gaps live in [docs/parity.md](docs/parity.md): 218 of 219 vendored
+upstream fixtures pass exactly; the single divergence is documented in the
+fixture runner.
