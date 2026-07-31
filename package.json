@@ -9,3 +9,8 @@
     "test:parity": "node tests/parity/fixture-parity.mjs",
     "bench": "node benches/sanitize-bench.mjs"
   },
+  "devDependencies": {
+    "dompurify": "github:cure53/DOMPurify#f8902545d9ca579a78f746e73f0b9712526c89da",
+    "jsdom": "^27.2.0"
+  }
+}
