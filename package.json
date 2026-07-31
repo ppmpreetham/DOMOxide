@@ -1,0 +1,11 @@
+{
+  "name": "domoxide-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:wasm": "wasm-pack build --target web --features wasm",
+    "test:wasm": "wasm-pack test --node --features wasm",
+    "test:compat": "node tests/compat-check.mjs",
+    "test:parity": "node tests/parity/fixture-parity.mjs",
+    "bench": "node benches/sanitize-bench.mjs"
+  },
