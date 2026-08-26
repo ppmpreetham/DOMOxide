@@ -6,11 +6,13 @@ DOMOxide is a HTML sanitizer that's 70x faster than DOMPurify.
 
 <!--image-->
 
-![Benchmark results](readme/time.png)
-![Benchmark results](readme/time2.png)
+[![Benchmark results](readme/time.png)
+](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time.png)
+[![Benchmark results](readme/time2.png)
+](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time2.png)
 
-Try it yourself:
-`pnpm run bench`
+> [!TIP]
+> Try it yourself: `pnpm run bench`
 
 | payload               | input size | DOMPurify        | DOMOxide       | speed up     |
 | --------------------- | ---------- | ---------------- | -------------- | ------------ |
@@ -22,21 +24,21 @@ Try it yourself:
 
 ## Usage
 
-There's 2 ways you can use this:
+There are a few ways:
 
-### Dompurify style
+### Dompurify way
 
 ```js
 import { createDOMPurify } from "domoxide/compat";
 
-// no window needed
+// no window needed lol
 const DOMPurify = await createDOMPurify();
 
 DOMPurify.sanitize("<img src=x onerror=alert(1)>"); // '<img src="x">'
 DOMPurify.sanitize(dirty, { FORBID_TAGS: ["style"], USE_PROFILES: { html: true } });
 ```
 
-### Raw esm bindings
+### Raw ESM bindings
 
 If you prefer raw esm bindings, you can use `sanitize_wasm` directly.
 
