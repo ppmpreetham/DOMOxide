@@ -14,8 +14,8 @@ yarn add domoxide
 
 ## Benchmarks
 
-[![Benchmark results](https://raw.githubusercontent.com/ppmpreetham/DOMOxide/main/readme/Time.png)](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time.png)
-[![Benchmark results](https://raw.githubusercontent.com/ppmpreetham/DOMOxide/main/readme/Time2.png)](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time2.png)
+<img src="readme/Time.png" />
+<img src="readme/Time2.png" />
 
 > [!TIP]
 > Try it yourself: `pnpm run bench`
@@ -46,7 +46,6 @@ DOMPurify.sanitize(dirty, { FORBID_TAGS: ["style"], USE_PROFILES: { html: true }
 
 ### 2. Bundlers (Vite, Next.js, Webpack, Rollup)
 
-
 ```js
 import { createDOMPurify } from "domoxide/compat";
 
@@ -70,7 +69,6 @@ const clean = sanitize_wasm(dirty, {
 ```
 
 ### 4. Node.js (ESM)
-
 
 ```js
 import { readFile } from "node:fs/promises";
