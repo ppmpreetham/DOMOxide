@@ -29,6 +29,7 @@ export function createDOMPurify(options) {
 }
 
 /** resolves when the engine is initialized; safe to call any number of times. */
-export function ensureReady() {
-  return ready ? ready : Promise.resolve(init());
+export function ensureReady(options) {
+  ready ??= Promise.resolve(init(options));
+  return ready;
 }

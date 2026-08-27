@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node scripts/build-pkg.mjs",
     "build:wasm": "wasm-pack build --target web --features wasm",
+    "test": "npm run test:compat && npm run test:parity",
     "test:wasm": "wasm-pack test --node --features wasm",
     "test:compat": "node tests/compat-check.mjs",
     "test:parity": "node tests/parity/fixture-parity.mjs",

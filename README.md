@@ -1,15 +1,21 @@
 # DOMOxide
 
-DOMOxide is a HTML sanitizer that's 70x faster than DOMPurify.
+DOMOxide is a high-performance Rust + WebAssembly HTML sanitizer that is **~70x faster than DOMPurify**.
+
+## Installation
+
+```bash
+npm install domoxide
+# or
+pnpm add domoxide
+# or
+yarn add domoxide
+```
 
 ## Benchmarks
 
-<!--image-->
-
-[![Benchmark results](readme/time.png)
-](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time.png)
-[![Benchmark results](readme/time2.png)
-](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time2.png)
+[![Benchmark results](https://raw.githubusercontent.com/ppmpreetham/DOMOxide/main/readme/Time.png)](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time.png)
+[![Benchmark results](https://raw.githubusercontent.com/ppmpreetham/DOMOxide/main/readme/Time2.png)](https://github.com/ppmpreetham/DOMOxide/blob/main/readme/Time2.png)
 
 > [!TIP]
 > Try it yourself: `pnpm run bench`
@@ -38,9 +44,19 @@ DOMPurify.sanitize("<img src=x onerror=alert(1)>"); // '<img src="x">'
 DOMPurify.sanitize(dirty, { FORBID_TAGS: ["style"], USE_PROFILES: { html: true } });
 ```
 
-### Raw ESM bindings
+### 2. Bundlers (Vite, Next.js, Webpack, Rollup)
 
-If you prefer raw esm bindings, you can use `sanitize_wasm` directly.
+
+```js
+import { createDOMPurify } from "domoxide/compat";
+
+const DOMPurify = await createDOMPurify();
+export const sanitize = (html) => DOMPurify.sanitize(html);
+```
+
+### 3. Raw WebAssembly ESM Bindings
+
+If you prefer using the raw WebAssembly exports directly:
 
 ```js
 import init, { sanitize_wasm } from "domoxide";
@@ -53,41 +69,33 @@ const clean = sanitize_wasm(dirty, {
 });
 ```
 
-### Browser (no bundler)
+### 4. Node.js (ESM)
+
+
+```js
+import { readFile } from "node:fs/promises";
+import { createDOMPurify } from "domoxide/compat";
+
+const wasm = await readFile(new URL("./node_modules/domoxide/domoxide_bg.wasm", import.meta.url));
+const DOMPurify = await createDOMPurify({ module_or_path: wasm });
+
+DOMPurify.sanitize("<img src=x onerror=alert(1)>"); // '<img src="x">'
+```
+
+### 5. Browser (No Bundler / ESM CDN)
 
 ```html
 <script type="module">
-  import { createDOMPurify } from "domoxide/compat.mjs";
+  import { createDOMPurify } from "https://esm.sh/domoxide/compat";
+
   const DOMPurify = await createDOMPurify();
   document.body.innerHTML = DOMPurify.sanitize(userInput);
 </script>
 ```
 
-### Bundler (vite / webpack / rollup)
-
-```js
-import init, { sanitize_wasm } from "domoxide";
-await init();
-export const clean = (dirty) => sanitize_wasm(dirty);
-```
-
-### Node (esm)
-
-```js
-// node >= 18, "type": "module"
-import { readFile } from "node:fs/promises";
-import init, { sanitize_wasm } from "domoxide.js";
-
-await init({
-  module_or_path: await readFile(new URL("domoxide_bg.wasm", import.meta.url)),
-});
-
-sanitize_wasm("<img src=x onerror=alert(1)>"); // '<img src="x">'
-```
-
 ## Parity
 
-218 of 219 test cases from DOMPurify
+**218 of 219** test cases from DOMPurify's test suite pass identically.
 
 > [!NOTE]  
-> (the 219th is a documented IE era `isindex` ordering that no modern engine, including jsdom DOMPurify can pass)
+> The 219th is a documented IE-era `isindex` ordering quirk that no modern engine (including jsdom DOMPurify) reproduces; DOMOxide adheres strictly to HTML5 spec order.
